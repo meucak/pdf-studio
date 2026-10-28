@@ -114,12 +114,67 @@ Bir Sonraki Toplantı: 04 Kasım 2026, Saat 10:00`
 // Başlangıç Kurulumu
 // ----------------------------------------------------
 window.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   initFont();
   initCreatorEvents();
   
-  // Başlangıç metni olarak dilekçe şablonunu yükle
-  loadTemplate('dilekce');
+  // URL parametresi ile mod kontrolü (?mode=editor veya ?mode=creator)
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialMode = urlParams.get('mode');
+  if (initialMode === 'editor') {
+    switchMode('editor');
+  } else {
+    // Başlangıç metni olarak dilekçe şablonunu yükle
+    loadTemplate('dilekce');
+  }
 });
+
+// ----------------------------------------------------
+// TEMA YÖNETİMİ (Sistem Varsayılanı / Aydınlık / Karanlık)
+// ----------------------------------------------------
+let currentThemePreference = 'system';
+
+function initTheme() {
+  currentThemePreference = localStorage.getItem('pdf_studio_theme') || 'system';
+  applyTheme(currentThemePreference);
+
+  // Sistem teması değişikliklerini dinamik olarak dinle
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  mediaQuery.addEventListener('change', () => {
+    if (currentThemePreference === 'system') {
+      applyTheme('system');
+    }
+  });
+}
+
+function setThemePreference(pref) {
+  currentThemePreference = pref;
+  localStorage.setItem('pdf_studio_theme', pref);
+  applyTheme(pref);
+
+  const labels = { system: 'Sistem Teması', light: 'Aydınlık Tema', dark: 'Karanlık Tema' };
+  showToast(labels[pref] + ' etkinleştirildi.');
+}
+
+function applyTheme(pref) {
+  const isDark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+
+  // Buton aktiflik sınıflarını güncelle
+  const btnSystem = document.getElementById('themeBtnSystem');
+  const btnLight = document.getElementById('themeBtnLight');
+  const btnDark = document.getElementById('themeBtnDark');
+
+  if (btnSystem) btnSystem.classList.toggle('active', pref === 'system');
+  if (btnLight) btnLight.classList.toggle('active', pref === 'light');
+  if (btnDark) btnDark.classList.toggle('active', pref === 'dark');
+
+  // Meta theme-color rengini güncelle
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', isDark ? '#0b1120' : '#2563eb');
+  }
+}
 
 // Font Yükleme (DejaVu Sans base64)
 function initFont() {

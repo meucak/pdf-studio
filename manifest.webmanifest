@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "id": "pdf-studio-app",
+  "name": "PDF Studio - PDF Oluşturucu ve Görsel Düzenleyici",
+  "short_name": "PDF Studio",
+  "description": "Düz metinleri profesyonel PDF belgelerine dönüştürün, mevcut PDF'leri açıp düzenleyin, filigran, karartma ve notlar ekleyin, tek tıkla doğrudan indirin.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "orientation": "any",
+  "theme_color": "#2563eb",
+  "background_color": "#0f172a",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities",
+    "office",
+    "business"
+  ],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Metinden PDF Oluştur",
+      "short_name": "Yeni PDF",
+      "description": "Düz metni anında PDF belgesine dönüştürün",
+      "url": "./index.html?mode=creator",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "PDF Aç ve Düzenle",
+      "short_name": "PDF Düzenle",
+      "description": "Mevcut PDF belgesini açın, filigran veya not ekleyin",
+      "url": "./index.html?mode=editor",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Masaüstü PDF Oluşturucu ve Canlı Önizleme"
+    },
+    {
+      "src": "screenshots/mobile.png",
+      "sizes": "540x960",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobil Görünüm ve Hızlı Belge Düzenleme"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "auto"
+  },
+  "edge_side_panel": {
+    "preferred_width": 480
+  }
+}
