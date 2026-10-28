@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Studio - Kolay PDF Oluşturucu & Düzenleyici</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Vendor Kütüphaneleri -->
+  <script src="vendor/fontkit.umd.min.js"></script>
+  <script src="vendor/pdf-lib.min.js"></script>
+  <script src="vendor/font-sans.js"></script>
+  <script src="vendor/pdf.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Üst Başlık ve Mod Seçimi -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">PDF Studio</h1>
+          <p class="brand-sub">Hızlı PDF Oluşturucu & Görsel Düzenleyici</p>
+        </div>
+      </div>
+
+      <nav class="mode-tabs">
+        <button id="tabCreator" class="tab-btn active" onclick="switchMode('creator')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <span>Metinden PDF Oluştur</span>
+        </button>
+        <button id="tabEditor" class="tab-btn" onclick="switchMode('editor')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <circle cx="12" cy="14" r="3"></circle>
+          </svg>
+          <span>PDF Aç & Düzenle</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- 1. BÖLÜM: METİNDEN PDF OLUŞTURUCU -->
+    <main id="creatorSection" class="workspace-section">
+      <!-- Sol Panel: Metin Girişi ve Ayarlar -->
+      <aside class="sidebar-panel">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>Belge Metni</h3>
+            <div class="template-dropdown">
+              <select id="templateSelect" onchange="loadTemplate(this.value)">
+                <option value="">Örnek Şablon Seç...</option>
+                <option value="dilekce">Resmi Dilekçe</option>
+                <option value="rapor">Teknik Rapor / Proje</option>
+                <option value="sozlesme">Hizmet Sözleşmesi</option>
+                <option value="notlar">Toplantı Notları</option>
+              </select>
+            </div>
+          </div>
+          <textarea id="creatorTextInput" class="text-editor" placeholder="Dönüştürmek istediğiniz düz metni buraya yapıştırın veya yazın..."></textarea>
+          <div class="text-editor-footer">
+            <span id="charCount">0 karakter | 0 kelime</span>
+            <button class="btn-ghost-sm" onclick="clearCreatorText()">Temizle</button>
+          </div>
+        </div>
+
+        <!-- Ayar Sekmeleri / Akordeon -->
+        <div class="panel-card settings-card">
+          <h3 class="settings-title">Biçimlendirme & Özellikler</h3>
+
+          <!-- Sayfa Boyutu ve Yönü -->
+          <div class="control-group">
+            <label>Sayfa Yapısı</label>
+            <div class="control-row">
+              <select id="pageSizeSelect" onchange="debouncedUpdatePreview()">
+                <option value="A4" selected>A4 (210 × 297 mm)</option>
+                <option value="A5">A5 (148 × 210 mm)</option>
+                <option value="A3">A3 (297 × 420 mm)</option>
+                <option value="LETTER">Letter (8.5 × 11 inç)</option>
+                <option value="LEGAL">Legal (8.5 × 14 inç)</option>
+              </select>
+              <select id="pageOrientationSelect" onchange="debouncedUpdatePreview()">
+                <option value="portrait" selected>Dikey (Portrait)</option>
+                <option value="landscape">Yatay (Landscape)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tipografi -->
+          <div class="control-group">
+            <label>Yazı Tipi & Boyutu</label>
+            <div class="control-row">
+              <div class="input-with-label">
+                <span>Boyut:</span>
+                <input type="number" id="fontSizeInput" value="12" min="8" max="48" onchange="debouncedUpdatePreview()">
+                <small>pt</small>
+              </div>
+              <div class="input-with-label">
+                <span>Satır:</span>
+                <input type="number" id="lineHeightInput" value="1.5" min="1.0" max="3.0" step="0.1" onchange="debouncedUpdatePreview()">
+              </div>
+            </div>
+            <div class="control-row" style="margin-top: 8px;">
+              <select id="fontFamilySelect" onchange="debouncedUpdatePreview()">
+                <option value="dejavu" selected>DejaVu Sans (Tam Türkçe)</option>
+                <option value="helvetica">Helvetica / Standart Sans</option>
+                <option value="times">Times New Roman / Serif</option>
+                <option value="courier">Courier / Monospace</option>
+              </select>
+              <select id="textAlignSelect" onchange="debouncedUpdatePreview()">
+                <option value="left" selected>Sola Yasla</option>
+                <option value="center">Ortala</option>
+                <option value="right">Sağa Yasla</option>
+                <option value="justify">İki Yana Yasla</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Kenar Boşlukları (Margins) -->
+          <div class="control-group">
+            <label>Kenar Boşlukları (mm)</label>
+            <div class="margin-grid">
+              <div>
+                <span>Üst:</span>
+                <input type="number" id="marginTop" value="20" min="5" max="60" onchange="debouncedUpdatePreview()">
+              </div>
+              <div>
+                <span>Alt:</span>
+                <input type="number" id="marginBottom" value="20" min="5" max="60" onchange="debouncedUpdatePreview()">
+              </div>
+              <div>
+                <span>Sol:</span>
+                <input type="number" id="marginLeft" value="20" min="5" max="60" onchange="debouncedUpdatePreview()">
+              </div>
+              <div>
+                <span>Sağ:</span>
+                <input type="number" id="marginRight" value="20" min="5" max="60" onchange="debouncedUpdatePreview()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Renkler -->
+          <div class="control-group">
+            <label>Renkler</label>
+            <div class="color-row">
+              <div class="color-item">
+                <span>Yazı Rengi:</span>
+                <input type="color" id="textColorInput" value="#111827" onchange="debouncedUpdatePreview()">
+              </div>
+              <div class="color-item">
+                <span>Sayfa Arkaplanı:</span>
+                <input type="color" id="bgColorInput" value="#ffffff" onchange="debouncedUpdatePreview()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Üst ve Alt Bilgi -->
+          <div class="control-group">
+            <label>Üst & Alt Bilgi (Header / Footer)</label>
+            <input type="text" id="headerTextInput" placeholder="Sayfa Üstü Başlığı (Opsiyonel)" oninput="debouncedUpdatePreview()">
+            <div class="control-row" style="margin-top: 6px;">
+              <input type="text" id="footerTextInput" placeholder="Sayfa Altı Notu (Opsiyonel)" oninput="debouncedUpdatePreview()">
+              <label class="checkbox-inline">
+                <input type="checkbox" id="pageNumberToggle" checked onchange="debouncedUpdatePreview()">
+                <span>Sayfa No</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- FİLİGRAN (WATERMARK) AYARLARI -->
+          <div class="control-group watermark-box">
+            <div class="watermark-header">
+              <label class="toggle-switch">
+                <input type="checkbox" id="watermarkToggle" onchange="toggleWatermarkControls()">
+                <span class="slider"></span>
+              </label>
+              <label for="watermarkToggle" class="switch-label"><strong>Arka Plana Filigran Ekle</strong></label>
+            </div>
+
+            <div id="watermarkControls" class="watermark-details" style="display: none;">
+              <input type="text" id="watermarkText" placeholder="Örn: GİZLİ / TASLAK / KOPYA" value="TASLAK" oninput="debouncedUpdatePreview()">
+              
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="input-with-label">
+                  <span>Açı:</span>
+                  <input type="number" id="watermarkAngle" value="-45" min="-90" max="90" step="5" onchange="debouncedUpdatePreview()">
+                  <small>°</small>
+                </div>
+                <div class="input-with-label">
+                  <span>Boyut:</span>
+                  <input type="number" id="watermarkSize" value="56" min="20" max="140" onchange="debouncedUpdatePreview()">
+                  <small>pt</small>
+                </div>
+              </div>
+
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="color-item">
+                  <span>Renk:</span>
+                  <input type="color" id="watermarkColor" value="#94a3b8" onchange="debouncedUpdatePreview()">
+                </div>
+                <div class="range-with-label">
+                  <span>Şeffaflık: <strong id="opacityVal">25%</strong></span>
+                  <input type="range" id="watermarkOpacity" min="5" max="80" value="25" oninput="document.getElementById('opacityVal').innerText = this.value + '%'; debouncedUpdatePreview()">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Sağ Panel: Canlı Önizleme ve İndirme -->
+      <section class="preview-panel">
+        <div class="preview-toolbar">
+          <div class="preview-info">
+            <span class="status-indicator">● Canlı Önizleme</span>
+            <span id="pageCountBadge" class="badge">1 Sayfa</span>
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn-secondary" onclick="generatePdfPreview(true)" title="Önizlemeyi Yenile">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+              <span>Yenile</span>
+            </button>
+            <div class="filename-input-group">
+              <input type="text" id="exportFileName" value="belgem.pdf" placeholder="dosya_adi.pdf">
+              <button class="btn-primary" id="btnDownloadCreator" onclick="downloadGeneratedPdf()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Tek Tıkla PDF İndir</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-container" id="previewContainer">
+          <div id="previewLoading" class="preview-loading" style="display:none;">
+            <div class="spinner"></div>
+            <span>Önizleme hazırlanıyor...</span>
+          </div>
+          <div id="previewPagesWrapper" class="preview-pages">
+            <!-- Canlı sayfalar buraya canvas veya görsel olarak render edilecek -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 2. BÖLÜM: PDF AÇ & DÜZENLE -->
+    <main id="editorSection" class="workspace-section" style="display: none;">
+      <!-- PDF Yüklenmemişse Dropzone Göster -->
+      <div id="editorDropzone" class="dropzone-area">
+        <input type="file" id="pdfFileInput" accept="application/pdf" style="display:none;" onchange="handlePdfFileUpload(event)">
+        <div class="dropzone-box" onclick="document.getElementById('pdfFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)">
+          <div class="dropzone-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="12" y2="12"></line>
+              <line x1="15" y1="15" x2="12" y2="12"></line>
+            </svg>
+          </div>
+          <h3>Düzenlemek İstediğiniz PDF Dosyasını Seçin</h3>
+          <p>Dosyayı buraya sürükleyip bırakabilir veya tıklayarak cihazınızdan seçebilirsiniz.</p>
+          <button class="btn-primary" type="button">Dosya Seç</button>
+        </div>
+      </div>
+
+      <!-- PDF Yüklendiğinde Gösterilecek Çalışma Alanı -->
+      <div id="editorWorkspace" class="editor-workspace" style="display: none;">
+        <!-- Üst Düzenleme Araç Çubuğu -->
+        <div class="editor-topbar">
+          <div class="editor-tools-group">
+            <button class="tool-btn" id="toolSelect" onclick="setEditorTool('select')" title="Seç ve Taşı">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3l7 18 3-7 7-3L3 3z"></path>
+              </svg>
+              <span>Seç / Gezin</span>
+            </button>
+            <button class="tool-btn" id="toolText" onclick="setEditorTool('text')" title="Sayfaya Tıklayarak Metin Ekle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                <line x1="9" y1="20" x2="15" y2="20"></line>
+                <line x1="12" y1="4" x2="12" y2="20"></line>
+              </svg>
+              <span>Metin Ekle</span>
+            </button>
+            <button class="tool-btn" id="toolWatermark" onclick="openEditorWatermarkModal()" title="PDF'e Filigran Ekle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+              </svg>
+              <span>Filigran Ekle</span>
+            </button>
+            <button class="tool-btn" id="toolRedact" onclick="setEditorTool('redact')" title="Karartma / Sansür Kutusu Ekle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="currentColor"></rect>
+              </svg>
+              <span>Karart / Sansürle</span>
+            </button>
+            <button class="tool-btn" id="toolRotate" onclick="rotateCurrentPage()" title="Sayfayı 90° Çevir">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              </svg>
+              <span>Döndür (90°)</span>
+            </button>
+            <button class="tool-btn tool-danger" id="toolDeletePage" onclick="deleteCurrentPage()" title="Bu Sayfayı Sil">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>Sayfayı Sil</span>
+            </button>
+            <button class="tool-btn tool-accent" onclick="extractTextToCreator()" title="Tüm Metni Çıkarıp Editöre Aktar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+              </svg>
+              <span>Metni Aktar</span>
+            </button>
+          </div>
+
+          <!-- Sağ Taraf: Sayfalama, Yakınlaştırma ve İndirme -->
+          <div class="editor-right-tools">
+            <div class="pagination-controls">
+              <button class="btn-icon" onclick="changeEditorPage(-1)" title="Önceki Sayfa">◀</button>
+              <span id="editorPageInfo">1 / 1</span>
+              <button class="btn-icon" onclick="changeEditorPage(1)" title="Sonraki Sayfa">▶</button>
+            </div>
+
+            <div class="zoom-controls">
+              <button class="btn-icon" onclick="changeEditorZoom(-0.15)" title="Uzaklaştır">-</button>
+              <span id="editorZoomVal">100%</span>
+              <button class="btn-icon" onclick="changeEditorZoom(0.15)" title="Yakınlaştır">+</button>
+            </div>
+
+            <button class="btn-ghost-sm" onclick="closeLoadedPdf()">Başka Dosya Aç</button>
+
+            <button class="btn-primary" id="btnDownloadEdited" onclick="saveAndDownloadEditedPdf()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Düzenlenmiş PDF'i İndir</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Aktif Araç Bildirim Çubuğu -->
+        <div id="toolTipBanner" class="tool-tip-banner" style="display: none;">
+          <span id="toolTipText">Sayfa üzerinde metin eklemek istediğiniz yere tıklayın.</span>
+          <button class="btn-ghost-xs" onclick="setEditorTool('select')">İptal</button>
+        </div>
+
+        <!-- PDF Görüntüleme ve Katman Alanı -->
+        <div class="editor-viewport" id="editorViewport">
+          <div id="canvasWrapper" class="canvas-wrapper">
+            <canvas id="pdfRenderCanvas"></canvas>
+            <!-- Tıklama ve Düzenleme Katmanı -->
+            <div id="annotationOverlay" class="annotation-overlay" onclick="handleOverlayClick(event)"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Filigran Ekleme Modal Penceresi (Editor için) -->
+    <div id="editorWatermarkModal" class="modal-overlay" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3>Mevcut PDF'e Filigran Ekle</h3>
+          <button class="close-btn" onclick="closeEditorWatermarkModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="control-group">
+            <label>Filigran Metni:</label>
+            <input type="text" id="edWatermarkText" value="GİZLİ & ÖZEL">
+          </div>
+          <div class="control-row">
+            <div class="input-with-label">
+              <span>Açı (°):</span>
+              <input type="number" id="edWatermarkAngle" value="-45" min="-90" max="90" step="5">
+            </div>
+            <div class="input-with-label">
+              <span>Boyut (pt):</span>
+              <input type="number" id="edWatermarkSize" value="60" min="20" max="150">
+            </div>
+          </div>
+          <div class="control-row" style="margin-top: 10px;">
+            <div class="color-item">
+              <span>Renk:</span>
+              <input type="color" id="edWatermarkColor" value="#dc2626">
+            </div>
+            <div class="range-with-label">
+              <span>Şeffaflık: <strong id="edOpacityVal">30%</strong></span>
+              <input type="range" id="edWatermarkOpacity" min="5" max="80" value="30" oninput="document.getElementById('edOpacityVal').innerText = this.value + '%'">
+            </div>
+          </div>
+          <div class="control-group" style="margin-top: 12px;">
+            <label>Uygulama Alanı:</label>
+            <div class="radio-group">
+              <label><input type="radio" name="edWatermarkScope" value="all" checked> Tüm Sayfalara Ekle</label>
+              <label><input type="radio" name="edWatermarkScope" value="current"> Sadece Bu Sayfaya Ekle</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeEditorWatermarkModal()">Vazgeç</button>
+          <button class="btn-primary" onclick="applyEditorWatermark()">Filigranı Uygula</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bildirim Bildirimi (Toast) -->
+    <div id="toastMessage" class="toast-message"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
